@@ -5,10 +5,10 @@ const bodyParser = require("body-parser");
 const coinRoutes = require('./routes/coin.routes');
 
 const app = express();
+dotenv.config();
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
-dotenv.config();
 
 app.use('/api', coinRoutes); 
 
