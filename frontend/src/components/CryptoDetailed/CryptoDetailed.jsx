@@ -12,8 +12,8 @@ function CryptoDetailed() {
   const selectedDays = useSelector((state) => state.coins.selectedDays);
 
   const [chartData, setChartData] = useState({
-    prices : [],
-    volumes : [],
+    ohlc : [],
+    volume : [],
   });
 
   useEffect(() => {
@@ -28,11 +28,12 @@ function CryptoDetailed() {
         if (res.status === 200) {
           console.log("object")
           const data = await res.json();
+          const analysis = data.analysis;
 
-          const prices = data.prices || [];
-          const volumes = data.total_volumes || [];
+          const ohlc = analysis.ohlc;
+          const volume = analysis.volume;
 
-          setChartData({ prices, volumes });
+          setChartData({ ohlc, volume });
         }
 
       } catch (err) {
@@ -41,6 +42,7 @@ function CryptoDetailed() {
     };
 
     loadMarketChart();
+    console.log(chartData);
 
   }, [selectedCoin, selectedDays]);
 
@@ -52,7 +54,7 @@ function CryptoDetailed() {
       </div>
 
       <div className="crypto-detail-graph">
-        <CryptoDetailedGraph priceData={chartData.prices} volumeData={chartData.volumes} />
+        {/* <CryptoDetailedGraph priceData={chartData.prices} volumeData={chartData.volumes} /> */}
       </div>
     </div>
   )

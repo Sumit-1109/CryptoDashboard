@@ -34,7 +34,7 @@ const getTopLoser = () => {
 };
 
 
-const getMarketChart = (id, vs_currency, days) => {
+const getMarketChart = (id, vs_currency = 'usd', days = 1) => {
   return axios.get(`${API_BASE}/coins/${id}/market_chart`, {
     params: {
       vs_currency,
@@ -43,6 +43,17 @@ const getMarketChart = (id, vs_currency, days) => {
     ...getHeaders(),
   });
 };
+
+const getOHLCChart = (id, vs_currency = 'usd', days = 1) => {
+  return axios.get(`${API_BASE}/coins/${id}/ohlc`, {
+    params: {
+      vs_currency,
+      days,
+    },
+    ...getHeaders(),
+  });
+};
+
 
 const getCoinList = async () => {
   return await axios.get(`${API_BASE}/coins/list`);
@@ -75,5 +86,6 @@ module.exports = {
   getCoinList,
   getCoinDetails,
   searchCoins,
-  getGlobalData
+  getGlobalData,
+  getOHLCChart
 };

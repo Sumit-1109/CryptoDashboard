@@ -1,4 +1,4 @@
-const { getMarketChart, getTopGainer, getTopLoser, getCoinList, getCoinDetails, searchCoins } = require("../services/coin.service");
+const { getMarketChart, getTopGainer, getTopLoser, getCoinList, getCoinDetails, searchCoins, getOHLCChart } = require("../services/coin.service");
 const { getCache, setCache } = require("../utils/cache");
 
 const handleMarketChart = async (req, res) => {
@@ -14,8 +14,13 @@ const handleMarketChart = async (req, res) => {
 
   try {
     const apiRes = await getMarketChart(id, vs_currency, days);
-    setCache(cacheKey, apiRes.data, 60); 
-    return res.status(200).json(apiRes.data);
+    const ohlcRes = await getOHLCChart(id, vs_currency, days);
+    const analysis = {
+      volume : apiRes.data.total_volumes,
+      ohlc : ohlcRes.data
+    }
+    setCache(cacheKey, analysis, 60); 
+    return res.status(200).json({analysis});
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

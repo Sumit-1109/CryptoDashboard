@@ -1,228 +1,209 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Chart,
-  TimeScale,
-  LinearScale,
-  BarController,
-  BarElement,
-  Tooltip,
-  CategoryScale,
+  ChartData,
+  ChartOptions,
+  registerables
 } from 'chart.js';
-import {
-  CandlestickController,
-  CandlestickElement,
-} from 'chartjs-chart-financial';
+import { FinancialController, CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
 import 'chartjs-adapter-date-fns';
-import {
-  Box,
-  Paper,
-  Typography,
-  ToggleButtonGroup,
-  ToggleButton,
-} from '@mui/material';
+import axios from 'axios';
 
 Chart.register(
-  TimeScale,
-  LinearScale,
-  BarElement,
-  BarController,
-  Tooltip,
-  CategoryScale,
+  ...registerables,
+  FinancialController,
   CandlestickController,
   CandlestickElement
 );
 
-const timeFrames = {
-  '7D': 7,
-  '14D': 14,
-  '30D': 30,
-};
+interface ChartEntry {
+  x: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
 
-function CryptoDetailedGraph({ priceData, volumeData }) {
-  const [days, setDays] = useState(7);
-  const chartRef = useRef(null);
+const CryptoDetailedGraph: React.FC = () => {
+  const priceCanvasRef = useRef<HTMLCanvasElement>(null);
+  const volumeCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handleTimeframeChange = (event, newDays) => {
-    if (newDays !== null) setDays(newDays);
-  };
+  const [coin, setCoin] = useState<string>('bitcoin');
+  const [days, setDays] = useState<number>(30);
+  const [formattedData, setFormattedData] = useState<ChartEntry[]>([]);
 
   useEffect(() => {
-    const ctx = chartRef.current?.getContext('2d');
-    if (!ctx) return;
+    const fetchChartData = async () => {
+      try {
+        const response = await axios.get(
+          `https://api.coingecko.com/api/v3/coins/${coin}/ohlc?vs_currency=usd&days=${days}`
+        );
+        const volumeResponse = await axios.get(
+          `https://api.coingecko.com/api/v3/coins/${coin}/market_chart?vs_currency=usd&days=${days}`
+        );
 
-    const slicedPrice = priceData.slice(-days * 24);
-    const slicedVolume = volumeData.slice(-days * 24);
+        const ohlc = response.data;
+        const volumeData = volumeResponse.data.total_volumes;
 
-    const dailyMap = {};
-    const volumeMap = {};
+        const formatted = ohlc.map((item: number[], i: number) => ({
+          x: item[0],
+          o: item[1],
+          h: item[2],
+          l: item[3],
+          c: item[4],
+          v: volumeData[i] ? volumeData[i][1] : 0
+        }));
 
-    slicedVolume.forEach(([timestamp, volume]) => {
-      const day = new Date(timestamp).toISOString().split('T')[0];
-      volumeMap[day] = (volumeMap[day] || 0) + volume;
-    });
-
-    slicedPrice.forEach(([timestamp, price]) => {
-      const date = new Date(timestamp);
-      const day = date.toISOString().split('T')[0];
-      if (!dailyMap[day]) {
-        dailyMap[day] = {
-          date,
-          open: price,
-          high: price,
-          low: price,
-          close: price,
-        };
-      } else {
-        dailyMap[day].high = Math.max(dailyMap[day].high, price);
-        dailyMap[day].low = Math.min(dailyMap[day].low, price);
-        dailyMap[day].close = price;
+        setFormattedData(formatted);
+      } catch (err) {
+        console.error('Data fetch error:', err);
       }
-    });
+    };
 
-    const candleData = [];
-    const volumeDataPoints = [];
+    fetchChartData();
+  }, [coin, days]);
 
-    let lastClose = null;
-    Object.entries(dailyMap).forEach(([day, entry]) => {
-      candleData.push({
-        x: entry.date,
-        o: entry.open,
-        h: entry.high,
-        l: entry.low,
-        c: entry.close,
-      });
+  useEffect(() => {
+    if (!priceCanvasRef.current || !volumeCanvasRef.current || formattedData.length === 0) return;
 
-      const volumeColor =
-        lastClose !== null && entry.close < lastClose
-          ? 'rgba(244,67,54,0.6)'
-          : 'rgba(76,175,80,0.6)';
-      lastClose = entry.close;
+    // Destroy previous charts if any
+    Chart.getChart(priceCanvasRef.current)?.destroy();
+    Chart.getChart(volumeCanvasRef.current)?.destroy();
 
-      volumeDataPoints.push({
-        x: entry.date,
-        y: Number((volumeMap[day] || 0) / 1_000_000).toFixed(2),
-        backgroundColor: volumeColor,
-      });
-    });
-
-    const chartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        datasets: [
-          {
-            type: 'candlestick',
-            label: 'Price',
-            data: candleData,
-            color: {
-              up: '#4caf50',
-              down: '#f44336',
-              unchanged: '#999',
-            },
-            yAxisID: 'y',
+    const sharedOptions = {
+      responsive: true,
+      parsing: false,
+      scales: {
+        x: {
+          type: 'time' as const,
+          time: {
+            unit: 'day',
+            tooltipFormat: 'MMM dd',
           },
-          {
-            type: 'bar',
-            label: 'Volume (M)',
-            data: volumeDataPoints,
-            parsing: false,
-            backgroundColor: context =>
-              context?.raw?.backgroundColor || 'rgba(150,150,150,0.3)',
-            
-            yAxisID: 'y1',
-            barPercentage: 1.0,
-            categoryPercentage: 1.0,
+          ticks: {
+            autoSkip: true,
+            maxTicksLimit: 10,
+            maxRotation: 0,
           },
-        ],
+          grid: {
+            display: false,
+          },
+        }
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          mode: 'index' as const,
           intersect: false,
         },
+      },
+    };
+
+    // Price Chart
+    new Chart(priceCanvasRef.current, {
+      type: 'candlestick',
+      data: {
+        datasets: [{
+          label: 'Price',
+          data: formattedData.map(d => ({
+            x: d.x,
+            o: d.o,
+            h: d.h,
+            l: d.l,
+            c: d.c,
+          })),
+          color: {
+            up: '#0f0',
+            down: '#f00',
+            unchanged: '#999',
+          },
+        }],
+      },
+      options: {
+        ...sharedOptions,
         scales: {
-          x: {
-            type: 'time',
-            time: { unit: 'day' },
-            grid: { display: false },
-            ticks: { color: '#aaa', font: { size: 10 } },
-          },
+          ...sharedOptions.scales,
           y: {
-            position: 'right',
-            title: { display: true, text: 'Price', color: '#aaa' },
-            grid: { color: 'rgba(200,200,200,0.1)' },
-            ticks: { color: '#aaa' },
-          },
-          y1: {
+            title: {
+              display: true,
+              text: 'Price (USD)',
+            },
             position: 'left',
-            beginAtZero: true,
-            title: { display: true, text: 'Volume (M)', color: '#aaa' },
-            grid: { drawOnChartArea: false },
-            ticks: { color: '#aaa' },
-          },
-        },
-        plugins: {
-          tooltip: {
-            mode: 'index',
-            callbacks: {
-              label: ctx => {
-                if (ctx.dataset.type === 'candlestick') {
-                  const { o, h, l, c } = ctx.raw;
-                  return `O: ${o}, H: ${h}, L: ${l}, C: ${c}`;
-                } else {
-                  return `Volume: ${ctx.raw.y}M`;
-                }
-              },
+            grid: {
+              display: true,
+              color: '#333',
             },
           },
-          legend: { display: false },
         },
-      },
+      } as ChartOptions<'candlestick'>,
     });
 
-    return () => chartInstance.destroy();
-  }, [priceData, volumeData, days]);
+    // Volume Chart
+    new Chart(volumeCanvasRef.current, {
+      type: 'bar',
+      data: {
+        datasets: [{
+          label: 'Volume',
+          data: formattedData.map(d => ({
+            x: d.x,
+            y: d.v,
+          })),
+          backgroundColor: 'rgba(0, 123, 255, 0.5)',
+        }],
+      },
+      options: {
+        ...sharedOptions,
+        scales: {
+          ...sharedOptions.scales,
+          y: {
+            title: {
+              display: true,
+              text: 'Volume',
+            },
+            position: 'right',
+            grid: {
+              display: false,
+            },
+          },
+        },
+      } as ChartOptions<'bar'>,
+    });
+
+  }, [formattedData]);
 
   return (
-    <Box className="chart-wrapper" sx={{ width: '100%', height: '500px' }}>
-      <Paper
-        elevation={4}
-        sx={{
-          padding: 2,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography variant="h6">Candlestick Chart</Typography>
-          <ToggleButtonGroup
-            value={days}
-            exclusive
-            onChange={handleTimeframeChange}
-            size="small"
-          >
-            {Object.entries(timeFrames).map(([label, value]) => (
-              <ToggleButton key={value} value={value}>
-                {label}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Box>
-        <Box sx={{ flexGrow: 1 }}>
-          <canvas ref={chartRef} />
-        </Box>
-      </Paper>
-    </Box>
+    <div style={{ width: '100%', padding: '1rem' }}>
+      <h2>{coin.charAt(0).toUpperCase() + coin.slice(1)} Chart</h2>
+      <div style={{ marginBottom: '1rem' }}>
+        <label>Select Coin: </label>
+        <select value={coin} onChange={(e) => setCoin(e.target.value)}>
+          <option value="bitcoin">Bitcoin</option>
+          <option value="ethereum">Ethereum</option>
+          <option value="solana">Solana</option>
+          <option value="cardano">Cardano</option>
+        </select>
+
+        <label style={{ marginLeft: '1rem' }}>Select Timeframe: </label>
+        <select value={days} onChange={(e) => setDays(Number(e.target.value))}>
+          <option value={7}>7 Days</option>
+          <option value={14}>14 Days</option>
+          <option value={30}>30 Days</option>
+        </select>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '600px' }}>
+        <div style={{ flex: 2 }}>
+          <canvas ref={priceCanvasRef} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <canvas ref={volumeCanvasRef} />
+        </div>
+      </div>
+    </div>
   );
-}
+};
 
 export default CryptoDetailedGraph;
