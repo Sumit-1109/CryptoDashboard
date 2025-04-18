@@ -31,7 +31,7 @@ const handleTopGainer = async (req, res) => {
       curr.price_change_percentage_24h > max.price_change_percentage_24h ? curr : max
     );
     setCache('topGainer', topGainer, 60);
-    res.json(topGainer);
+    return res.status(200).json(topGainer);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -47,7 +47,7 @@ const handleTopLoser = async (req, res) => {
       curr.price_change_percentage_24h < min.price_change_percentage_24h ? curr : min
     );
     setCache('topLoser', topLoser, 60);
-    res.json(topLoser);
+    return res.status(200).json(topLoser);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
