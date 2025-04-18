@@ -14,7 +14,7 @@ const getTopGainer = () => {
     params: {
       vs_currency: 'usd',
       order: 'price_change_percentage_24h_desc',
-      per_page: 1,
+      per_page: 100,
       page: 1,
     },
     ...getHeaders(),
@@ -26,12 +26,13 @@ const getTopLoser = () => {
     params: {
       vs_currency: 'usd',
       order: 'price_change_percentage_24h_asc',
-      per_page: 1,
+      per_page: 100,
       page: 1,
     },
     ...getHeaders(),
   });
 };
+
 
 const getMarketChart = (id, vs_currency, days) => {
   return axios.get(`${API_BASE}/coins/${id}/market_chart`, {

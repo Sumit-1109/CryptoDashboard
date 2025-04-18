@@ -7,12 +7,15 @@ const handleMarketChart = async (req, res) => {
   const cacheKey = `marketChart-${id}-${vs_currency}-${days}`;
 
   const cached = getCache(cacheKey);
-  if (cached) return res.json(cached);
+  
+  if (cached) {
+    return res.status(200).json(cached);
+  }
 
   try {
     const apiRes = await getMarketChart(id, vs_currency, days);
     setCache(cacheKey, apiRes.data, 60); 
-    return res.json(apiRes.data);
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -24,7 +27,9 @@ const handleTopGainer = async (req, res) => {
 
   try {
     const { data } = await getTopGainer();
-    const topGainer = data.sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h)[0];
+    const topGainer = data.reduce((max, curr) => 
+      curr.price_change_percentage_24h > max.price_change_percentage_24h ? curr : max
+    );
     setCache('topGainer', topGainer, 60);
     res.json(topGainer);
   } catch (error) {
@@ -38,7 +43,9 @@ const handleTopLoser = async (req, res) => {
 
   try {
     const { data } = await getTopLoser();
-    const topLoser = data.sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h)[0];
+    const topLoser = data.reduce((min, curr) => 
+      curr.price_change_percentage_24h < min.price_change_percentage_24h ? curr : min
+    );
     setCache('topLoser', topLoser, 60);
     res.json(topLoser);
   } catch (error) {

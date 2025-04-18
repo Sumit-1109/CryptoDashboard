@@ -1,0 +1,14 @@
+.crypto-detailed-container{
+    background-color: aliceblue;
+    width: 100%;
+    .selectCoinDay{
+        display: flex;
+    }
+    
+    .crypto-detail-graph{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+}

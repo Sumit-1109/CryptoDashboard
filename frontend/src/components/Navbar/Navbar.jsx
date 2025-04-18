@@ -1,10 +1,11 @@
-import React from 'react'
+import React from 'react';
+import "./Navbar.scss";
 
 function Navbar() {
   return (
-    <div>
-      
-    </div>
+    <nav className='navbar'>
+      <h1>Crypto Dashboard</h1>
+    </nav>
   )
 }
 
