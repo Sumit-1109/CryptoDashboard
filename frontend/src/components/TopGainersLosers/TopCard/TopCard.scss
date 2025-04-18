@@ -1,0 +1,73 @@
+@keyframes fadeInUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes pulseGlow {
+    0% {
+      box-shadow: 0 0 10px rgba(33, 150, 243, 0.15);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(33, 150, 243, 0.35);
+    }
+    100% {
+      box-shadow: 0 0 10px rgba(33, 150, 243, 0.15);
+    }
+  }
+  
+  .top-card {
+    width: 260px;
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.4s ease;
+  
+    &:hover {
+      animation: pulseGlow 1.2s infinite ease-in-out;
+      transform: scale(1.02);
+    }
+  
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+  
+    .top-card-title {
+      font-size: 14px;
+      color: #757575;
+      margin: 0;
+    }
+  
+    .top-card-name {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0;
+    }
+  
+    .top-card-price {
+      font-size: 14px;
+      color: #333;
+    }
+  
+    .top-card-change {
+      font-size: 14px;
+      font-weight: 500;
+  
+      &.positive {
+        color: #2e7d32;
+      }
+  
+      &.negative {
+        color: #c62828;
+      }
+    }
+  }
+  

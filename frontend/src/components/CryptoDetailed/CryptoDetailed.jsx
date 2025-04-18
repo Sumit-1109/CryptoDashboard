@@ -19,14 +19,21 @@ function CryptoDetailed() {
   useEffect(() => {
     const loadMarketChart = async () => {
       if (!selectedCoin) return;
+      
 
       try{
-        const data = await fetchMarketChart(selectedCoin, selectedDays);
+        const res = await fetchMarketChart(selectedCoin, selectedDays);
+        console.log(res);
 
-        const prices = data.prices || [];
-        const volumes = data.total_volumes || [];
+        if (res.status === 200) {
+          console.log("object")
+          const data = await res.json();
 
-        setChartData({ prices, volumes });
+          const prices = data.prices || [];
+          const volumes = data.total_volumes || [];
+
+          setChartData({ prices, volumes });
+        }
 
       } catch (err) {
         console.error(err);
@@ -45,7 +52,7 @@ function CryptoDetailed() {
       </div>
 
       <div className="crypto-detail-graph">
-        {/* <CryptoDetailedGraph priceData={chartData.prices} volumeData={chartData.volumes} /> */}
+        <CryptoDetailedGraph priceData={chartData.prices} volumeData={chartData.volumes} />
       </div>
     </div>
   )

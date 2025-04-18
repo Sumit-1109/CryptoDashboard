@@ -15,7 +15,7 @@ const handleMarketChart = async (req, res) => {
   try {
     const apiRes = await getMarketChart(id, vs_currency, days);
     setCache(cacheKey, apiRes.data, 60); 
-    return res.status(200).json(data);
+    return res.status(200).json(apiRes.data);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

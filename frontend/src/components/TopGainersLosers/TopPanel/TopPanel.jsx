@@ -1,20 +1,30 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './TopPanel.scss';
 import TopCard from '../TopCard/TopCard';
 import { fetchTopGainer, fetchTopLoser } from '../../../service/api.service';
 
-const TopPanel = ({ gainer, loser }) => {
+const TopPanel = () => {
+
+  const [top, setTop] = useState({
+    topGainer : null,
+    topLoser : null
+  });
 
   useEffect(() => {
     const getTopGainerLoser = async () => {
       try {
         const gainerRes = await fetchTopGainer();
         const loserRes = await fetchTopLoser();
+        console.log("object")
 
-        if(gainerRes.ok && loserRes.ok){
+        if(gainerRes.status === 200 && loserRes.status === 200){
+
           const gainerData = await gainerRes.json();
-          const loserRes = await loserRes.json();
-          console.log(gainerData, loserRes)
+          const loserData = await loserRes.json();
+          setTop({
+            topGainer : gainerData,
+            topLoser : loserData
+          })
         }
       } catch (err) {
         console.log(err);
@@ -26,8 +36,8 @@ const TopPanel = ({ gainer, loser }) => {
 
   return (
     <div className="top-panel">
-      <TopCard title="Top Gainer" data={gainer} />
-      <TopCard title="Top Loser" data={loser} />
+      <TopCard title="Top Gainer" data={top.topGainer} />
+      <TopCard title="Top Loser" data={top.topLoser} />
     </div>
   );
 };

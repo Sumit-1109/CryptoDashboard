@@ -10,21 +10,30 @@ export const fetchCoinList = async () => {
 };
 
 export const fetchMarketChart = async (id, days = 7) => {
-  const response = await fetch(
-    `${BASE_URL}/coins/${id}/market_chart?vs_currency=usd&days=${days}`
+  return await fetch(`${BASE_URL}/coins/${id}/market_chart?vs_currency=usd&days=${days}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    }
   );
-  const data = await response.json();
-  return data;
 };
 
 export const fetchTopGainer = async () => {
-  const response = await fetch(`${BASE_URL}/top-gainer`);
-  const data = await response.json();
-  return data;
+  return await fetch(`${BASE_URL}/top-gainer`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    }
+  });
+  
 };
 
 export const fetchTopLoser = async () => {
-  const response = await fetch(`${BASE_URL}/top-loser`);
-  const data = await response.json();
-  return data;
+  return await fetch(`${BASE_URL}/top-loser`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    }
+  });
 };
