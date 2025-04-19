@@ -1,4 +1,4 @@
-.coin-dropdown-container {
+.days-dropdown-container {
     width: 100%;
     max-width: 400px;
     margin: 20px auto;
@@ -7,7 +7,7 @@
     animation: fadeIn 0.8s ease-in-out;
   }
   
-  .coin-dropdown {
+  .days-dropdown {
     width: 100%;
   
     .MuiInputLabel-root {
@@ -28,7 +28,7 @@
       }
     }
   
-    .MuiAutocomplete-option {
+    .MuiMenuItem-root {
       font-size: 15px;
       color: #444;
   
@@ -47,5 +47,4 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-  
+  }  

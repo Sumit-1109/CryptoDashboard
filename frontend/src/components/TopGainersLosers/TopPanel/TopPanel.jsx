@@ -15,7 +15,7 @@ const TopPanel = () => {
       try {
         const gainerRes = await fetchTopGainer();
         const loserRes = await fetchTopLoser();
-        console.log("object")
+
 
         if(gainerRes.status === 200 && loserRes.status === 200){
 

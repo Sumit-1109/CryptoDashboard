@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import CoinDropdown from "./CoinDropdown/CoinDropdown"
-import DaysDropdown from './DaysDropdown/DaysDropdown';
+import SelectCoin from './SelectCoin/SelectCoin';
+import SelectDays from './SelectDays/SelectDays';
 import { useSelector } from 'react-redux';
 import { fetchMarketChart } from '../../service/api.service';
 import CryptoDetailedGraph from './CryptoDetailedGraph/CryptoDetailedGraph'
@@ -48,8 +48,8 @@ function CryptoDetailed() {
   return (
     <div className='crypto-detailed-container'>
       <div className='selectCoinDay'>
-        <CoinDropdown /> 
-        <DaysDropdown />
+        <SelectCoin /> 
+        <SelectDays />
       </div>
 
       <div className="crypto-detail-graph">

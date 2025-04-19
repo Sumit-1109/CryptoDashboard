@@ -3,9 +3,9 @@ import { fetchCoinList } from '../../../service/api.service';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCoinList, setSelectedCoin } from '../../../store/slices/coinSlice';
 import { Autocomplete, TextField, CircularProgress } from '@mui/material';
-import './CoinDropdown.scss';
+import './SelectCoin.scss';
 
-function CoinDropdown() {
+function SelectCoin() {
   const dispatch = useDispatch();
   const coinList = useSelector((state) => state.coins.coinList);
   const selectedCoin = useSelector((state) => state.coins.selectedCoin);
@@ -69,4 +69,4 @@ function CoinDropdown() {
   );
 }
 
-export default CoinDropdown;
+export default SelectCoin;
