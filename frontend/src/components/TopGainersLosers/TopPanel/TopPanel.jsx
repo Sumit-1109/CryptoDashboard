@@ -31,12 +31,14 @@ const TopPanel = () => {
       }
     };
 
+    getTopGainerLoser();
+
     const interval = setInterval(() => {
       getTopGainerLoser();
     }, 60000);
 
     return () => clearInterval(interval);
-    
+
   }, []);
 
   return (

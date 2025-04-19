@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import CoinDropdown from './CoinDropDown/CoinDropDown';
-import DaysDropdown from './DaysDropDown/DaysDropdown';
+import CoinDropdown from "./CoinDropdown/CoinDropdown"
+import DaysDropdown from './DaysDropdown/DaysDropdown';
 import { useSelector } from 'react-redux';
 import { fetchMarketChart } from '../../service/api.service';
 import CryptoDetailedGraph from './CryptoDetailedGraph/CryptoDetailedGraph'
