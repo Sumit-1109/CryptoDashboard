@@ -1,34 +1,24 @@
-// .chart-container {
-//     width: 100%;
-//     max-width: 1200px;
-//     margin: auto;
-//     padding: 16px;
-//     box-sizing: border-box;
-//     background-color: #f5faff;
-//   }
+.graph-wrapper {
+
+    position: relative;
+    height: 500px;
   
-//   .chart-paper {
-//     background-color: #fff;
-//     padding: 16px;
-//     height: auto;
-//     display: flex;
-//     flex-direction: column;
-//     gap: 24px;
-//   }
-  
-//   .chart-title {
-//     font-weight: 600;
-//     margin-bottom: 8px;
-//     text-align: center;
-//   }
-  
-//   .canvas-candle {
-//     height: 600px !important;
-//     width: 100% !important;
-//   }
-  
-//   .canvas-volume {
-//     height: 300px !important;
-//     width: 100% !important;
-//   }
-  
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  padding-bottom: 2rem;
+
+}
+
+canvas {
+  transition: transform 0.3s ease;
+  cursor: crosshair;
+}
+canvas:hover {
+  transform: scale(1.01);
+}

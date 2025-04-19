@@ -1,209 +1,223 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from "react";
 import {
   Chart,
-  ChartData,
-  ChartOptions,
-  registerables
-} from 'chart.js';
-import { FinancialController, CandlestickController, CandlestickElement } from 'chartjs-chart-financial';
-import 'chartjs-adapter-date-fns';
-import axios from 'axios';
+  TimeScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+} from "chart.js";
+import {
+  CandlestickController,
+  CandlestickElement,
+} from "chartjs-chart-financial";
+import "chartjs-adapter-date-fns";
+import "./CryptoDetailedGraph.scss";
 
 Chart.register(
-  ...registerables,
-  FinancialController,
+  TimeScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
   CandlestickController,
   CandlestickElement
 );
 
-interface ChartEntry {
-  x: number;
-  o: number;
-  h: number;
-  l: number;
-  c: number;
-  v: number;
-}
+const groupByDay = (data) => {
+  const grouped = {};
+  data.forEach(([timestamp, ...values]) => {
+    const dayKey = new Date(timestamp).toISOString().split("T")[0];
+    if (!grouped[dayKey]) grouped[dayKey] = [];
+    grouped[dayKey].push([timestamp, ...values]);
+  });
+  return grouped;
+};
 
-const CryptoDetailedGraph: React.FC = () => {
-  const priceCanvasRef = useRef<HTMLCanvasElement>(null);
-  const volumeCanvasRef = useRef<HTMLCanvasElement>(null);
-
-  const [coin, setCoin] = useState<string>('bitcoin');
-  const [days, setDays] = useState<number>(30);
-  const [formattedData, setFormattedData] = useState<ChartEntry[]>([]);
-
-  useEffect(() => {
-    const fetchChartData = async () => {
-      try {
-        const response = await axios.get(
-          `https://api.coingecko.com/api/v3/coins/${coin}/ohlc?vs_currency=usd&days=${days}`
-        );
-        const volumeResponse = await axios.get(
-          `https://api.coingecko.com/api/v3/coins/${coin}/market_chart?vs_currency=usd&days=${days}`
-        );
-
-        const ohlc = response.data;
-        const volumeData = volumeResponse.data.total_volumes;
-
-        const formatted = ohlc.map((item: number[], i: number) => ({
-          x: item[0],
-          o: item[1],
-          h: item[2],
-          l: item[3],
-          c: item[4],
-          v: volumeData[i] ? volumeData[i][1] : 0
-        }));
-
-        setFormattedData(formatted);
-      } catch (err) {
-        console.error('Data fetch error:', err);
-      }
+const transformToCandleStick = (ohlcData) => {
+  const grouped = groupByDay(ohlcData);
+  return Object.entries(grouped).map(([day, entries]) => {
+    const sorted = entries.sort((a, b) => a[0] - b[0]);
+    const open = sorted[0][1];
+    const close = sorted[sorted.length - 1][4];
+    const high = Math.max(...sorted.map((e) => e[2]));
+    const low = Math.min(...sorted.map((e) => e[3]));
+    return {
+      x: new Date(day),
+      o: open,
+      h: high,
+      l: low,
+      c: close,
     };
+  });
+};
 
-    fetchChartData();
-  }, [coin, days]);
+const transformToVolume = (volumeData) => {
+  const grouped = groupByDay(volumeData);
+  return Object.entries(grouped).map(([day, entries]) => {
+    const total = entries.reduce((sum, [, vol]) => sum + vol, 0);
+    return {
+      x: new Date(day),
+      y: total,
+    };
+  });
+};
+
+function CryptoDetailedGraph({ ohlc, volumeData }) {
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
 
   useEffect(() => {
-    if (!priceCanvasRef.current || !volumeCanvasRef.current || formattedData.length === 0) return;
+    if (!ohlc.length || !volumeData.length) return;
 
-    // Destroy previous charts if any
-    Chart.getChart(priceCanvasRef.current)?.destroy();
-    Chart.getChart(volumeCanvasRef.current)?.destroy();
+    const candleData = transformToCandleStick(ohlc);
+    const volumeBarData = transformToVolume(volumeData);
 
-    const sharedOptions = {
-      responsive: true,
-      parsing: false,
-      scales: {
-        x: {
-          type: 'time' as const,
-          time: {
-            unit: 'day',
-            tooltipFormat: 'MMM dd',
+    const allPrices = candleData.flatMap((d) => [d.o, d.h, d.l, d.c]);
+    const minPrice = Math.min(...allPrices) * 0.98;
+    const maxPrice = Math.max(...allPrices) * 1.02;
+
+    const volumeValues = volumeBarData.map(d => d.y);
+    const minVolume = Math.min(...volumeValues) * 0.5;
+    const maxVolume = Math.max(...volumeValues) * 4;
+
+
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
+    }
+
+    const ctx = chartRef.current.getContext("2d");
+
+    chartInstance.current = new Chart(ctx, {
+      type: "bar",
+      data: {
+        datasets: [
+          {
+            id: "price",
+            type: "candlestick",
+            label: "Price",
+            data: candleData,
+            xAxisID: "x",
+            yAxisID: "yPrice",
+            barPercentage: 0.9,
+            categoryPercentage: 0.5,
+            color: {
+              up: "#26a69a",
+              down: "#ef5350",
+              unchanged: "#999",
+            },
           },
-          ticks: {
-            autoSkip: true,
-            maxTicksLimit: 10,
-            maxRotation: 0,
+          {
+            id : "volume",
+            type: "bar",
+            label: "Volume",
+            data: volumeBarData,
+            xAxisID: "x",
+            yAxisID: "yVolume",
+            backgroundColor: "rgba(100,181,246,0.5)",
+            barPercentage: 0.9,
+            categoryPercentage: 0.5,
           },
-          grid: {
-            display: false,
-          },
-        }
+        ],
       },
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          mode: 'index' as const,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: true,
+        interaction: {
+          mode: "index",
           intersect: false,
         },
-      },
-    };
-
-    // Price Chart
-    new Chart(priceCanvasRef.current, {
-      type: 'candlestick',
-      data: {
-        datasets: [{
-          label: 'Price',
-          data: formattedData.map(d => ({
-            x: d.x,
-            o: d.o,
-            h: d.h,
-            l: d.l,
-            c: d.c,
-          })),
-          color: {
-            up: '#0f0',
-            down: '#f00',
-            unchanged: '#999',
+        animation: {
+          duration: 1000,
+          easing: "easeOutQuart",
+        },
+        plugins: {
+          tooltip: {
+            mode: "nearest",
+            intersect: false,
+            callbacks: {
+              label: (context) => {
+                if (context.dataset.type === "candlestick") {
+                  const ohlc = context.raw;
+                  return `O: ${ohlc.o}, H: ${ohlc.h}, L: ${ohlc.l}, C: ${ohlc.c}`;
+                } else {
+                  return `Volume: ${context.raw.y}`;
+                }
+              },
+            },
           },
-        }],
-      },
-      options: {
-        ...sharedOptions,
+          legend: {
+            display: true,
+            position: "top",
+          },
+        },
         scales: {
-          ...sharedOptions.scales,
-          y: {
+          x: {
+            type: "time",
+            offset: true,
+            time: {
+              unit: "day",
+              tooltipFormat: "PP",
+              displayFormats: {
+                day: "MMM dd",
+              },
+            },
+            ticks: {
+              color: "#444",
+              font: { size: 9 },
+              padding: 6,
+              autoSkip: true,
+              maxRotation: 90,
+              minRotation: 90,
+              display: true,
+            },
+            grid: {
+              color: "#f0f0f0",
+            },
+          },
+          yPrice: {
+            min: minPrice,
+            max: maxPrice,
+            position: "left",
             title: {
               display: true,
-              text: 'Price (USD)',
+              text: "Price (USD)",
             },
-            position: 'left',
+            ticks: {
+              color: "#26a69a",
+            },
             grid: {
+              drawOnChartArea: false,
+            },
+          },
+          yVolume: {
+            min: minVolume,
+            max: maxVolume,
+            position: "right",
+            title: {
               display: true,
-              color: '#333',
+              text: "Volume",
+            },
+            ticks: {
+              color: "#90caf9",
+            },
+            grid: {
+              drawOnChartArea: false,
             },
           },
         },
-      } as ChartOptions<'candlestick'>,
-    });
-
-    // Volume Chart
-    new Chart(volumeCanvasRef.current, {
-      type: 'bar',
-      data: {
-        datasets: [{
-          label: 'Volume',
-          data: formattedData.map(d => ({
-            x: d.x,
-            y: d.v,
-          })),
-          backgroundColor: 'rgba(0, 123, 255, 0.5)',
-        }],
       },
-      options: {
-        ...sharedOptions,
-        scales: {
-          ...sharedOptions.scales,
-          y: {
-            title: {
-              display: true,
-              text: 'Volume',
-            },
-            position: 'right',
-            grid: {
-              display: false,
-            },
-          },
-        },
-      } as ChartOptions<'bar'>,
     });
-
-  }, [formattedData]);
+  }, [ohlc, volumeData]);
 
   return (
-    <div style={{ width: '100%', padding: '1rem' }}>
-      <h2>{coin.charAt(0).toUpperCase() + coin.slice(1)} Chart</h2>
-      <div style={{ marginBottom: '1rem' }}>
-        <label>Select Coin: </label>
-        <select value={coin} onChange={(e) => setCoin(e.target.value)}>
-          <option value="bitcoin">Bitcoin</option>
-          <option value="ethereum">Ethereum</option>
-          <option value="solana">Solana</option>
-          <option value="cardano">Cardano</option>
-        </select>
-
-        <label style={{ marginLeft: '1rem' }}>Select Timeframe: </label>
-        <select value={days} onChange={(e) => setDays(Number(e.target.value))}>
-          <option value={7}>7 Days</option>
-          <option value={14}>14 Days</option>
-          <option value={30}>30 Days</option>
-        </select>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '600px' }}>
-        <div style={{ flex: 2 }}>
-          <canvas ref={priceCanvasRef} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <canvas ref={volumeCanvasRef} />
-        </div>
-      </div>
+    <div className="graph-wrapper">
+      <canvas ref={chartRef}></canvas>
     </div>
   );
-};
+}
 
 export default CryptoDetailedGraph;

@@ -42,7 +42,6 @@ function CryptoDetailed() {
     };
 
     loadMarketChart();
-    console.log(chartData);
 
   }, [selectedCoin, selectedDays]);
 
@@ -54,7 +53,7 @@ function CryptoDetailed() {
       </div>
 
       <div className="crypto-detail-graph">
-        {/* <CryptoDetailedGraph priceData={chartData.prices} volumeData={chartData.volumes} /> */}
+        <CryptoDetailedGraph ohlc={chartData.ohlc} volumeData={chartData.volume} />
       </div>
     </div>
   )
